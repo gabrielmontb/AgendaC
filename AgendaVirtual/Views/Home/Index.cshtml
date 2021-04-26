@@ -1,0 +1,173 @@
+﻿
+@{
+    ViewBag.Title = "Agenda Virtual";
+}
+<!--<script src="~/Scripts/CRUDs/crud.js"></script>-->
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<style>    
+    #p1 {background-color: rgb(248,248,255);}
+</style>
+<html>
+<body id="p1">
+    <h1 align="center" style="font-size:50px">Agenda virtual</h1>
+    <h3 align="center">Simples, rápida e prática!</h3>
+    <br />
+    <form align="center">
+        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+            Adicionar contato
+        </button>
+        <div class="collapse" id="collapseExample">
+            <div class="card card-body"> </div>
+            <span> Nome: </span>
+            <br>
+            <input type="text" id="nome" />
+            <br>
+            <span> Telefone: </span>
+            <br>
+            <input maxlength="11" type="text" id="telefone" />
+            <br>
+            <button id="salvar_ctt" onclick="ajaxInsert()">Salvar</button>
+            <div id="mensagens"></div>
+        </div>
+    </form>
+    <table class="table table-striped" id="TabelaAgenda">
+        <thead>
+            <tr>
+                <th scope="col">Nome</th>
+                <th scope="col">Telefone</th>
+                <th scope="col">Ação</th>
+            </tr>
+
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" align="center" id="exampleModalLabel">Editar Contato</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" align="center">
+                    <span> Nome: </span>
+                    <br>
+                    <input type="text" id="nome_modal" />
+                    <br>
+                    <span> Telefone: </span>
+                    <br>
+                    <input maxlength="11" type="text" id="telefone_modal" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button id="confirmar_edicao" type="button" class="btn btn-primary">Editar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>
+
+<script type="text/javascript">
+    $('#myModal').on('shown.bs.modal', function () {
+        $('#myInput').trigger('focus')
+    })
+    $(function () {
+        imprimeTabela();
+    });
+    function ajaxInsert() {
+        $.ajax({
+            url: "/Home/InsertValues/",
+            method: "POST",
+            data: {
+                nome: $("#nome").val(),
+                telefone: $("#telefone").val(),
+            },
+            datatype: "json",
+            success: function (data) {
+                $("#mensagens").html(data);
+                $('#nome').val('');
+                $('#telefone').val('');
+                $("#mensagens").html("Inserido!");
+                location.reload();
+            },
+            error: function (data) {
+                $("#mensagens").html("Não inserido!");
+            },
+        })
+    }
+
+    function ajaxDelete(id) {
+        if (confirm('Deseja realmente deletar?')) {        
+            console.log(id);
+            $.ajax({
+                type:"POST",
+                url: "/Home/DeleteValues/",
+                data: {id_delete:id,},
+                success: function (data) {
+                    $("#row" + id).remove();
+                    location.reload();
+                },
+                error: function (data) {
+                    console.info("Erro!!!");
+                    $("#mensagens").html("Não deletado!");
+                },
+            })
+        }
+    }
+    function updateAjax(id) {
+        $(document).on('click', "#confirmar_edicao", function (e) {
+            console.log(id);
+            e.preventDefault();
+            $.ajax({
+                url: "/Home/updateValues/",
+                method: "POST",
+                data: {
+                    delete_id: id,
+                    nome_d: $("#nome_modal").val(),
+                    telefone_d: $("#telefone_modal").val(),                    
+                },
+                dataType: "json",
+                success: function (data) {
+                    $("#mensagens").html(data);
+                    $("#mensagens").html("Editado com sucesso!");
+                    $('#nome_modal').val('');
+                    $('#telefone_modal').val('');
+                    location.reload();
+                },
+                error: function (data) {
+                    $("#mensagens").html("Não editado!");
+                },
+            })
+        });
+    }
+    function imprimeTabela() {
+        $.ajax({
+            url: "/Home/GetData/",
+            data: {},
+            type: "GET",
+            async: true,
+            dataType: "json",
+            contentType: "application/json",
+            success: function (data) {
+                var row;
+                var btn;
+                $.each(data, function (i, v1) {
+                    row += "<tr><td>" + v1.Nome + "</td><td>" + v1.Telefone + "</td><td>" + '<button onclick="updateAjax(' + v1.ID + ')" data-toggle="modal" data-target="#exampleModal" > Editar </button >' + '      ' + '<button type="button" onclick="ajaxDelete(' + v1.ID + ')"> Excluir</button >' + "</td></tr>"
+                });
+                $("#TabelaAgenda").append(row);
+            },
+        })
+    }
+
+
+
+
+
+</script>
